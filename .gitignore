@@ -19,3 +19,9 @@
 
 # Go workspace file
 go.work
+
+#credentials
+*.env
+
+#idea
+.idea
