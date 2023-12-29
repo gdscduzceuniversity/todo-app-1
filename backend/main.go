@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gdscduzceuniversity/todo-app-1/db"
-	"github.com/gdscduzceuniversity/todo-app-1/repository"
+	"github.com/gdscduzceuniversity/todo-app-1/routes"
+	"os"
 )
 
 // init function to setup the database connection
@@ -11,6 +13,13 @@ func init() {
 }
 
 func main() {
+	// Defer the database disconnect
 	defer db.Disconnect()
-	repository.InsertUser("test2", "test")
+
+	// Start the server
+	err := routes.StartServer()
+	if err != nil {
+		fmt.Errorf("error starting server: %w", err)
+		os.Exit(1)
+	}
 }
