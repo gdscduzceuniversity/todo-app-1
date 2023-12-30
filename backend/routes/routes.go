@@ -10,6 +10,16 @@ func StartServer() error {
 	err := router.Run(":3000")
 	return err
 }
+
+/*
+Select All: /tasks GET
+Select: /tasks/:id GET
+Create: /tasks PUT
+Edit: /tasks/:id POST
+Delete: /tasks/:id DELETE
+Select All: /tasks?limit=5&page=1
+*/
+
 func SetupRouter() *gin.Engine {
 	router := gin.New()
 	router.SetTrustedProxies(nil)
@@ -20,7 +30,7 @@ func SetupRouter() *gin.Engine {
 	api := router.Group("/api")
 	{
 		api.GET("/ping", handlers.Ping)
-		//api.POST("/login", loginEndpoint)
+		api.POST("/tasks", handlers.CreateTask)
 	}
 	return router
 }
