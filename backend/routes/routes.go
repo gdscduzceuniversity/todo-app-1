@@ -21,6 +21,13 @@ func SetupRouter() *gin.Engine {
 	{
 		api.GET("/ping", handlers.Ping)
 		//api.POST("/login", loginEndpoint)
+
+		// Auth Routes
+
+		api.POST("/register", handlers.Register)
+		api.POST("/login", handlers.Login)
+		api.POST("/logout", handlers.Logout)
+
 	}
 	return router
 }
