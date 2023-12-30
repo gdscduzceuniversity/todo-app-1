@@ -23,6 +23,17 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+// Register godoc
+// @Summary Register new user
+// @Description This endpoint registers a new user with a username and password.
+// @Tags Auth
+// @Accept  json
+// @Produce  json
+// @Param   RegisterRequest  body      RegisterRequest  true  "Register Information"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /register [post]
 func Register(c *gin.Context) {
 	request := &RegisterRequest{}
 	if err := c.Bind(request); err != nil {
@@ -64,6 +75,18 @@ func Register(c *gin.Context) {
 	return
 }
 
+// Login godoc
+// @Summary Login user
+// @Description This endpoint logs in a user by username and password.
+// @Tags Auth
+// @Accept  json
+// @Produce  json
+// @Param   LoginRequest  body      LoginRequest  true  "Login Information"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /login [post]
 func Login(c *gin.Context) {
 	request := &LoginRequest{}
 	if err := c.ShouldBindJSON(request); err != nil {
@@ -119,6 +142,7 @@ func Login(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "success"})
 }
 
+// Todo activate this endpoint
 func User(c *gin.Context) {
 	cookie, err := c.Cookie("jwt")
 	if err != nil {
@@ -153,6 +177,14 @@ func User(c *gin.Context) {
 	})
 }
 
+// Logout godoc
+// @Summary Logout user
+// @Description This endpoint logs out a user by clearing the JWT cookie.
+// @Tags Auth
+// @Produce  json
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Router /logout [post]
 func Logout(c *gin.Context) {
 	if jwtCookie, err := c.Cookie("jwt"); err != nil || jwtCookie == "" {
 		c.JSON(401, gin.H{"message": "User not logged in"})
