@@ -26,6 +26,7 @@ type LoginRequest struct {
 func Register(c *gin.Context) {
 	request := &RegisterRequest{}
 	if err := c.Bind(request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
 		return
 	}
 
@@ -39,6 +40,7 @@ func Register(c *gin.Context) {
 	userExists, err := models.GetUserByUsername(request.Username)
 
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error GetUserByUsername"})
 		return
 	}
 
@@ -50,12 +52,13 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	if err := models.CreateUser(user); err != nil {
+	if err = models.CreateUser(user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error CreateUser"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "User created successfully",
+		"message": "success",
 	})
 
 	return

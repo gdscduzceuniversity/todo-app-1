@@ -31,20 +31,16 @@ type Session struct {
 }
 
 func CreateUser(user User) (err error) {
-	defer func() {
-		if err != nil {
-			err = fmt.Errorf("error in CreateUser: %w", err)
-		}
-	}()
 
 	user.ID = uuid.New().String()
 	result, err := db.UserCollection.InsertOne(context.Background(), user)
-
 	if err != nil {
-		return
+		err = fmt.Errorf("error in InsertOne collection method: %w", err)
+		return err
 	}
 
-	return fmt.Errorf("%v", result.InsertedID)
+	fmt.Println(result)
+	return nil
 }
 
 func GetUserByUsername(username string) (user User, err error) {
