@@ -41,6 +41,10 @@ func SetupRouter() *gin.Engine {
 
 		// Task Routes
 		api.POST("/tasks", handlers.CreateTask)
+		api.GET("/tasks/:id", handlers.ReadTask)
+		api.GET("/tasks", handlers.ReadTasks)
+		api.PUT("/tasks/:id", handlers.UpdateTask)
+		api.DELETE("/tasks/:id", handlers.DeleteTask)
 
 	}
 	// Swagger Route for connect to swagger ui go to http://127.0.0.1:3000/swagger/index.html
