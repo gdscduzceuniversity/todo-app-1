@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/gdscduzceuniversity/todo-app-1/repository"
+	"github.com/gdscduzceuniversity/todo-app-1/models"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -23,7 +23,12 @@ type createTaskRequest struct {
 // CreateTask endpoint calls CreateTask function from repository/task.go
 func CreateTask(c *gin.Context) {
 
-	// todo: add user session validation
+	if auth := models.ValidateUser(c); !auth.IsAuthenticated {
+		c.JSON(401, gin.H{"message": "User not logged in"})
+		return
+	}
+
+	authUserId := models.ValidateUser(c).Id
 
 	// Create a new request object
 	var req createTaskRequest
@@ -34,7 +39,7 @@ func CreateTask(c *gin.Context) {
 	}
 
 	// Call CreateTask function from repository/task.go
-	if err := repository.InsertTask(req.Title, req.Description, *req.Completed, req.DueDate); err != nil {
+	if err := models.InsertTask(req.Title, req.Description, *req.Completed, req.DueDate); err != nil {
 		c.JSON(500, gin.H{"Failed to create task": err.Error()})
 		return
 	}
