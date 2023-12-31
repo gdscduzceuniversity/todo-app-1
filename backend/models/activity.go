@@ -19,8 +19,10 @@ type Activity struct {
 
 const activityCollection = "activities"
 
+// todo bug fix: activity type wont be saved to the database when the task completion changes
+
 // InsertActivity inserts an activity to the database
-func InsertActivity(taskID string, activityType int, old, new string) {
+func InsertActivity(taskID string, activityType int, old, new string) error {
 	// Get the collection
 	coll := db.Client.Database(databaseName).Collection(activityCollection)
 
@@ -30,10 +32,11 @@ func InsertActivity(taskID string, activityType int, old, new string) {
 	// Insert the activity to the database
 	result, err := coll.InsertOne(context.Background(), newActivity)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("error while inserting activity: %w", err)
 	}
 	// Print the inserted activity's ID
 	fmt.Println("Inserted an activity, id:", result.InsertedID)
+	return nil
 }
 
 // ReadActivities reads activities by taskID from the database
