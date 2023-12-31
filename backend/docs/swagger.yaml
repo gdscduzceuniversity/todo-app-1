@@ -13,6 +13,22 @@ definitions:
       username:
         type: string
     type: object
+  handlers.taskRequest:
+    properties:
+      completed:
+        type: integer
+      description:
+        type: string
+      dueDate:
+        type: string
+      title:
+        type: string
+    required:
+    - completed
+    - description
+    - dueDate
+    - title
+    type: object
 info:
   contact: {}
 paths:
@@ -106,4 +122,145 @@ paths:
       summary: Register new user
       tags:
       - Auth
+  /tasks:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of tasks with pagination.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of tasks
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: User not logged in
+        "500":
+          description: Internal Server Error
+      summary: List tasks
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Add a new task to the database.
+      parameters:
+      - description: Create Task
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.taskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task created successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Failed to bind JSON
+        "401":
+          description: User not logged in
+        "500":
+          description: Internal Server Error
+      summary: Create new task
+      tags:
+      - tasks
+  /tasks/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific task from the database.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task deleted successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: User not logged in
+        "500":
+          description: Internal Server Error
+      summary: Delete task
+      tags:
+      - tasks
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific task.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task details
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: User not logged in
+        "500":
+          description: Internal Server Error
+      summary: Get task
+      tags:
+      - tasks
+    put:
+      consumes:
+      - application/json
+      description: Update details of a specific task.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Task
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.taskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task updated successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Failed to bind JSON
+        "401":
+          description: User not logged in
+        "500":
+          description: Internal Server Error
+      summary: Update task
+      tags:
+      - tasks
 swagger: "2.0"
