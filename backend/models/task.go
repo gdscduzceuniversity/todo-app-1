@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gdscduzceuniversity/todo-app-1/db"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -30,6 +31,8 @@ const databaseName = "todo-database"
 //    - Delete
 //    - Change Status (1,2,3)
 
+// todo bug fix: unable to save completed field to database
+
 // InsertTask creates a task in the database
 func InsertTask(title, description, UserID string, completed int, dueDate time.Time) error {
 
@@ -37,7 +40,7 @@ func InsertTask(title, description, UserID string, completed int, dueDate time.T
 	coll := db.Client.Database(databaseName).Collection(taskCollection)
 
 	// Create a new task
-	doc := Task{Title: title, Description: description, Completed: completed, CreateDate: time.Now(), DueDate: dueDate}
+	doc := Task{Title: title, Description: description, UserID: UserID, Completed: completed, CreateDate: time.Now(), DueDate: dueDate}
 
 	// Insert the task to the database
 	result, err := coll.InsertOne(context.Background(), doc)
@@ -54,12 +57,18 @@ func ReadTask(id string) (Task, error) {
 	// Get the collection
 	coll := db.Client.Database(databaseName).Collection(taskCollection)
 
+	// Convert string ID to ObjectId
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return Task{}, fmt.Errorf("error converting ID to ObjectId: %w", err)
+	}
+
 	// Create a filter
-	filter := bson.D{{"_id", id}}
+	filter := bson.D{{"_id", objID}}
 
 	// Find one document
 	var result Task
-	err := coll.FindOne(context.Background(), filter).Decode(&result)
+	err = coll.FindOne(context.Background(), filter).Decode(&result)
 	if err != nil {
 		return Task{}, fmt.Errorf("error while getting task: %w", err)
 	}
@@ -67,15 +76,15 @@ func ReadTask(id string) (Task, error) {
 	return result, nil
 }
 
-// ReadTasks reads tasks by pagination from the database
-func ReadTasks(page, limit int64) ([]Task, int64, error) {
+// ReadTasks reads tasks by pagination from the database for a specific userId
+func ReadTasks(userId string, page, limit int64) ([]Task, int64, error) {
 	// Get the collection
 	coll := db.Client.Database(databaseName).Collection(taskCollection)
 
-	// Create a filter
-	filter := bson.D{{}}
+	// Create a filter to match the userId
+	filter := bson.D{{"userID", userId}}
 
-	// Find documents
+	// Find documents with pagination
 	var results []Task
 	findOptions := options.Find()
 	findOptions.SetLimit(limit)
@@ -84,6 +93,8 @@ func ReadTasks(page, limit int64) ([]Task, int64, error) {
 	if err != nil {
 		return []Task{}, 0, fmt.Errorf("error while getting tasks: %w", err)
 	}
+	defer cur.Close(context.Background())
+
 	for cur.Next(context.Background()) {
 		var result Task
 		err = cur.Decode(&result)
@@ -93,95 +104,46 @@ func ReadTasks(page, limit int64) ([]Task, int64, error) {
 		results = append(results, result)
 	}
 
-	// return the number of all tasks
+	// Return the number of tasks for the specific userId
 	count, err := coll.CountDocuments(context.Background(), filter)
 	if err != nil {
 		return []Task{}, 0, fmt.Errorf("error while getting tasks: %w", err)
 	}
-	fmt.Println("Number of tasks:", count)
 
 	return results, count, nil
 }
 
-// UpdateTaskStatus updates a task's completed status in the database
-func UpdateTaskStatus(id string, completed int) error {
+// UpdateTask updates various fields of a task in the database.
+// It takes task ID and the fields to be updated as parameters.
+func UpdateTask(id string, title string, description string, completed int, dueDate time.Time) error {
 	// Get the collection
 	coll := db.Client.Database(databaseName).Collection(taskCollection)
 
-	// Create a filter
-	filter := bson.D{{"_id", id}}
+	// Convert string ID to ObjectId
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("error converting ID to ObjectId: %w", err)
+	}
+
+	// Create a filter to match the task ID
+	filter := bson.D{{"_id", objID}}
 
 	// Create an update
-	update := bson.D{{"$set", bson.D{{"completed", completed}}}}
+	update := bson.D{
+		{"$set", bson.D{
+			{"title", title},
+			{"description", description},
+			{"completed", completed},
+			{"dueDate", dueDate},
+		}},
+	}
 
 	// Update the task in the database
 	result, err := coll.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		return fmt.Errorf("error while updating task: %w", err)
 	}
-	// Print the number of updated documents
-	fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
-	return nil
-}
 
-// UpdateTaskTitle updates a task's title in the database
-func UpdateTaskTitle(id, title string) error {
-	// Get the collection
-	coll := db.Client.Database(databaseName).Collection(taskCollection)
-
-	// Create a filter
-	filter := bson.D{{"_id", id}}
-
-	// Create an update
-	update := bson.D{{"$set", bson.D{{"title", title}}}}
-
-	// Update the task in the database
-	result, err := coll.UpdateOne(context.Background(), filter, update)
-	if err != nil {
-		return fmt.Errorf("error while updating task: %w", err)
-	}
-	// Print the number of updated documents
-	fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
-	return nil
-}
-
-// UpdateTaskDescription updates a task's description in the database
-func UpdateTaskDescription(id, description string) error {
-	// Get the collection
-	coll := db.Client.Database(databaseName).Collection(taskCollection)
-
-	// Create a filter
-	filter := bson.D{{"_id", id}}
-
-	// Create an update
-	update := bson.D{{"$set", bson.D{{"description", description}}}}
-
-	// Update the task in the database
-	result, err := coll.UpdateOne(context.Background(), filter, update)
-	if err != nil {
-		return fmt.Errorf("error while updating task: %w", err)
-	}
-	// Print the number of updated documents
-	fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
-	return nil
-}
-
-// UpdateTaskDueDate updates a task's due date in the database
-func UpdateTaskDueDate(id string, dueDate time.Time) error {
-	// Get the collection
-	coll := db.Client.Database(databaseName).Collection(taskCollection)
-
-	// Create a filter
-	filter := bson.D{{"_id", id}}
-
-	// Create an update
-	update := bson.D{{"$set", bson.D{{"dueDate", dueDate}}}}
-
-	// Update the task in the database
-	result, err := coll.UpdateOne(context.Background(), filter, update)
-	if err != nil {
-		return fmt.Errorf("error while updating task: %w", err)
-	}
 	// Print the number of updated documents
 	fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
 	return nil
@@ -192,14 +154,25 @@ func DeleteTask(id string) error {
 	// Get the collection
 	coll := db.Client.Database(databaseName).Collection(taskCollection)
 
-	// Create a filter
-	filter := bson.D{{"_id", id}}
+	// Convert string ID to ObjectId
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("error converting ID to ObjectId: %w", err)
+	}
+
+	// Create a filter with ObjectId
+	filter := bson.D{{"_id", objID}}
 
 	// Delete the task from the database
 	result, err := coll.DeleteOne(context.Background(), filter)
 	if err != nil {
 		return fmt.Errorf("error while deleting task: %w", err)
 	}
+
+	if result.DeletedCount == 0 {
+		return fmt.Errorf("error while deleting task: %w", err)
+	}
+
 	// Print the number of deleted documents
 	fmt.Printf("Deleted %v Documents!\n", result.DeletedCount)
 	return nil
